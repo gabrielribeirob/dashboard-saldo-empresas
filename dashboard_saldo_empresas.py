@@ -166,7 +166,7 @@ app.layout = dbc.Container(
           dbc.Card([
             dbc.CardBody([
               html.Span("Somatório Atacado", className="card-text"),
-              html.H4(style={"color": "#adfc92"}, id="soma-atacado-text"),
+              html.H5(style={"color": "#adfc92"}, id="soma-atacado-text"),
               ])
               ], color="light", outline=True, style={"margin-top": "10px",
                   "box-shadow": "0 4px 4px 0 rgba(0, 0, 0, 0.15), 0 4px 20px 0 rgba(0, 0, 0, 0.19)",
@@ -176,7 +176,7 @@ app.layout = dbc.Container(
           dbc.Card([
             dbc.CardBody([
               html.Span("Somatório Varejo"),
-              html.H3(style={"color": "#389fd6"}, id="soma-varejo-text"),
+              html.H5(style={"color": "#389fd6"}, id="soma-varejo-text"),
 
             ])
           ], color="light", outline=True, style={"margin-top": "10px",
@@ -187,7 +187,7 @@ app.layout = dbc.Container(
           dbc.Card([
             dbc.CardBody([
               html.Span("Negócio de alimentação"),
-              html.H3(style={"color": "#DF2935"}, id="negocio-alimentacao-text"),
+              html.H5(style={"color": "#DF2935"}, id="negocio-alimentacao-text"),
 
             ])
           ], color="light", outline=True, style={"margin-top": "10px",
