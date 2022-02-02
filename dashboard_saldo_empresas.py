@@ -236,12 +236,17 @@ def display_status(location):
     valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
   
   if location=="BRASIL":
+    valor_por_estado_varejo = sum(coluna_total_varejo)
+  else:
     valor_por_estado_varejo = []
+
+  if location=="BRASIL":
+    valor_por_estado_alimentacao = sum(coluna_total_aliemntacao)
   else:
     valor_por_estado_varejo = []
   
-  soma_atacado = valor_por_estado_atacado
-  return (soma_atacado,2,3)
+  
+  return (valor_por_estado_atacado,valor_por_estado_varejo,valor_por_estado_alimentacao)
 
 def plot_line_graph():
   pass
