@@ -10,50 +10,61 @@ import plotly.graph_objects as go
 
 # ===========================
 # Abrindo a planilha por abas
-df = pd.read_excel(
-    io = "Saldo Empresas.xlsx",
-    sheet_name = "Atacado - Saldo_Atacado",
-    usecols = "A:BK",
-    header = 1
+def open_xlsx(path_name, sheetName, colunas, index_row):
+  df = pd.read_excel(
+    io = path_name,
+    sheet_name = sheetName,
+    usecols = colunas,
+    header = index_row
   )
+  return df
+
+# Aba Atacado 
+df_atacado     = open_xlsx("Saldo Empresas.xlsx", "Atacado - Saldo_Atacado", "A:BK", 1)
+
+# Aba Varejo
+df_varejo      = open_xlsx("Saldo Empresas.xlsx", "Varejo - Saldo_Varejo", "A:BK", 1)
+
+# Aba Alimentacao 
+df_alimentacao = open_xlsx("Saldo Empresas.xlsx", "Negócios de alimentação - Saldo", "A:BK", 1)
 
 
 # ===========================
 # A coluna com as informações de localização veio com um nome errado
 # Além disso a última coluna que é uma soma dos valores não precisa estar aqui (iria atrabalhar o tratamento)
-df.rename(columns={"Unnamed: 0": "location"}, inplace=True)
-df.drop(df.index[-1], inplace=True)
+# Aba Atacado
+df_atacado.rename(columns={"Unnamed: 0": "location"}, inplace=True)
+df_atacado.drop(df_atacado.index[-1], inplace=True)
+# Aba Varejo 
+df_varejo.rename(columns={"Unnamed: 0": "location"}, inplace=True)
+df_varejo.drop(df_varejo.index[-1], inplace=True)
+# Aba Alimentacao
+df_alimentacao.rename(columns={"Unnamed: 0": "location"}, inplace=True)
+df_alimentacao.drop(df_alimentacao.index[-1], inplace=True)
 
 
 # ===========================
 # Separando os valores da coluna location. O objtivo é obter 3 colunas: municipio e estado
-lista_location = df['location'].to_list()
-padrao_estado  = r'(-\w\w-\d)'
-estados_uf     = [re.sub(r'\d+','',re.search(padrao_estado, i, re.I).group()).replace('-','').strip() for i in lista_location]
+def coluna_estado_municipio(df):
+  """ Recebe um dataframe e retorna o mesmo com as colunas 'estado' e 'municipio' """
+  lista_location = df['location'].to_list()
+  # Separando Estado
+  padrao_estado  = r'(-\w\w-\d)'
+  estados_uf     = [re.sub(r'\d+','',re.search(padrao_estado, i, re.I).group()).replace('-','').strip() for i in lista_location]
+  # Criando uma coluna de estado
+  df['estado'] = estados_uf
+  # Separando Município
+  padrao_municipio        = r'\w+\s?((\w+)?(\s)?(\w+)?)*-?\w+[^\d\W]'
+  municipios_             = [re.search(padrao_municipio, i).group() for i in lista_location]
+  padrao_municipio2       = r'([^\-\W]*\s?)+'
+  municipios              = [re.search(padrao_municipio2, i).group() for i in municipios_]
+  df['municipio']         = municipios
+  return df
 
 
-# ===========================
-# Separando Estado
-estados_uf    = [re.sub(r'\d+','',re.search(padrao_estado, i, re.I).group()).replace('-','').strip() for i in lista_location]
-
-
-# ===========================
-# Criando uma coluna de estado
-df['estado'] = estados_uf
-
-
-# ===========================
-# Separando Município
-padrao_municipio  = r'\w+\s?((\w+)?(\s)?(\w+)?)*-?\w+[^\d\W]'
-municipios_       = [re.search(padrao_municipio, i).group() for i in lista_location]
-padrao_municipio2 = r'([^\-\W]*\s?)+'
-municipios        = [re.search(padrao_municipio2, i).group() for i in municipios_]
-
-
-# ===========================
-# Criando uma coluna de municipios
-df['municipio'] = municipios
-
+df_atacado     = coluna_estado_municipio(df_atacado)
+df_varejo      = coluna_estado_municipio(df_varejo)
+df_alimentacao = coluna_estado_municipio(df_alimentacao)
 
 # ===========================
 # Abrindo o geojson
@@ -62,28 +73,39 @@ brazil_states = json.load(open("./brazil_geo.json", "r"))
 
 # ===========================
 # Recorte de visualização para o mapa
-df_estados_2021 = df[[2021, 'estado']].groupby(['estado']).sum().reset_index()
+df_estados_2021 = df_atacado[[2021, 'estado']].groupby(['estado']).sum().reset_index()
 
 
 # ===========================
 # Recorte para o gráfico de linhas
-df_soma_ano                     = df.drop(['location', 'Total', 'municipio', 'estado'], 1)
-df_soma_ano.loc['Column_Total'] = df.sum(numeric_only=True, axis=0)
-soma = df_soma_ano.loc['Column_Total'].sum() 
+def soma_ano(df):
+  df_soma_ano                     = df.drop(['location', 'Total', 'municipio', 'estado'], 1)
+  df_soma_ano.loc['Column_Total'] = df.sum(numeric_only=True, axis=0)
+  soma                            = df_soma_ano.loc['Column_Total'].sum()
+  return soma 
 
+def coluna_total(df):
+  """ Cria um linha com o valor total das colunas """
+  df                     = df.drop(['location', 'Total', 'municipio', 'estado'], 1)
+  df.loc['Column_Total'] = df.sum(numeric_only=True, axis=0)
+  return df.loc['Column_Total'].tolist()
+
+coluna_total_atacado      = coluna_total(df_atacado)
+coluna_total_varejo       = coluna_total(df_varejo)
+coluna_total_aliemntacao  = coluna_total(df_alimentacao)
 
 # ===========================
-# Selação de colunas para o dropdown de anos
-selected_column_years = {}
-for i in df_soma_ano.columns.tolist():
-  selected_column_years[i] = str(i)
-
+# Selação de anos
+anos_lista = df_atacado.drop(['location', 'Total', 'municipio', 'estado'], 1).columns.tolist()
+anos_dict = {}
+for k,v in enumerate(anos_lista):
+  anos_dict[anos_lista[k]] = v
 
 # ===========================
 # Selação de colunas para o dropdown de Estados
-selected_column_states = {}
-for i in df['estado'].tolist():
-  selected_column_states[i] = str(i)
+selected_aba = {}
+for i in df_atacado['estado'].tolist():
+  selected_aba[i] = str(i)
 
 
 # ========================
@@ -107,7 +129,7 @@ fig.update_layout(
 )
 
 fig2 = go.Figure(layout={"template": "plotly_dark"})
-fig2.add_trace(go.Scatter(x=df_soma_ano.columns, y=df_soma_ano.loc['Column_Total'].values))
+fig2.add_trace(go.Scatter(x=anos_lista, y=coluna_total_atacado))
 fig2.update_layout(
   paper_bgcolor = "#242424",
   plot_bgcolor  = "#242424",
@@ -128,6 +150,16 @@ app.layout = dbc.Container(
         html.H5("Saldo das Empresas no Brasil 1960 - 2021"),
         dbc.Button("BRASIL", color="primary", id="location-button", size="md")
         ], style={}),
+      
+      html.Div([
+        html.P("Informe o ano:", style={"margin-top": "40px"}),
+        html.Div(id= 'div-dropdown-year', className='div-for-dropdown1', children=[
+          dcc.Dropdown(id='year-dropdown', 
+            options=[{"label":j, "value":i} for i,j in anos_dict.items()],
+            value=2021,
+            style={"margin-top": "10px"})
+        ])
+      ]),
       
       dbc.Row([
         dbc.Col([
@@ -164,9 +196,9 @@ app.layout = dbc.Container(
       ]),
       html.Div([
         html.P("Informe o estado:", style={"margin-top": "25px"}),
-          html.Div(id = 'div-test', className="div-for-dropdown", children=[
+          html.Div(id = 'div-test', className="div-for-dropdown2", children=[
             dcc.Dropdown(id='state-dropdown', 
-            options=[{"label": j, "value":i} for i, j  in selected_column_states.items()],
+            options=[{"label": j, "value":i} for i, j  in selected_aba.items()],
             value= "SP",
             style={"margin-top": "10px"}), 
         dcc.Graph(id="line-graph", figure=fig2)
@@ -199,9 +231,14 @@ fluid=True)
 
 def display_status(location):
   if location=="BRASIL":
-    valor_por_estado_atacado = df_soma_ano.loc['Column_Total'].sum()
+    valor_por_estado_atacado = sum(coluna_total_atacado)
   else:
-    valor_por_estado_atacado = df_soma_ano[df_soma_ano["estado"] == location]
+    valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
+  
+  if location=="BRASIL":
+    valor_por_estado_varejo = []
+  else:
+    valor_por_estado_varejo = []
   
   soma_atacado = valor_por_estado_atacado
   return (soma_atacado,2,3)
