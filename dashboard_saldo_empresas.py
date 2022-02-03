@@ -88,7 +88,7 @@ def coluna_total(df):
   """ Cria um linha com o valor total das colunas """
   df                     = df.drop(['location', 'Total', 'municipio', 'estado'], 1)
   df.loc['Column_Total'] = df.sum(numeric_only=True, axis=0)
-  return df.loc['Column_Total'].tolist()
+  return df
 
 coluna_total_atacado      = coluna_total(df_atacado)
 coluna_total_varejo       = coluna_total(df_varejo)
@@ -102,10 +102,21 @@ for k,v in enumerate(anos_lista):
   anos_dict[anos_lista[k]] = v
 
 # ===========================
-# Selação de colunas para o dropdown de Estados
-selected_aba = {}
-for i in df_atacado['estado'].tolist():
-  selected_aba[i] = str(i)
+# Groupby Estado
+df_atacado_by_estado       = df_atacado.groupby(['estado']).sum().reset_index()
+df_varejo_by_estado        = df_varejo.groupby(['estado']).sum().reset_index()
+df_alimentacao_by_estado   = df_alimentacao.groupby(['estado']).sum().reset_index()
+
+
+
+# ===========================
+# Dict abas
+aba_name_dict = {
+  "Atacado - Saldo_Atacado": "Atacado - Saldo_Atacado",
+  "Varejo - Saldo_Varejo": "Varejo - Saldo_Varejo",
+  "Negócios de alimentação - Saldo": "Negócios de alimentação - Saldo"
+}
+
 
 
 # ========================
@@ -129,7 +140,7 @@ fig.update_layout(
 )
 
 fig2 = go.Figure(layout={"template": "plotly_dark"})
-fig2.add_trace(go.Scatter(x=anos_lista, y=coluna_total_atacado))
+fig2.add_trace(go.Scatter(x=anos_lista, y=coluna_total_atacado.loc['Column_Total'].tolist()))
 fig2.update_layout(
   paper_bgcolor = "#242424",
   plot_bgcolor  = "#242424",
@@ -197,9 +208,9 @@ app.layout = dbc.Container(
       html.Div([
         html.P("Informe o estado:", style={"margin-top": "25px"}),
           html.Div(id = 'div-test', className="div-for-dropdown2", children=[
-            dcc.Dropdown(id='state-dropdown', 
-            options=[{"label": j, "value":i} for i, j  in selected_aba.items()],
-            value= "SP",
+            dcc.Dropdown(id='aba-dropdown', 
+            options=[{"label": j, "value":i} for i, j  in aba_name_dict.items()],
+            value= "Atacado - Saldo_Atacado",
             style={"margin-top": "10px"}), 
         dcc.Graph(id="line-graph", figure=fig2)
           ]),
@@ -225,31 +236,59 @@ fluid=True)
     Output("negocio-alimentacao-text", "children")
   ],
   [
-    Input("location-button", "children")
+    Input("location-button", "children"),
+    Input("div-test", "children")
   ]
 )
 
-def display_status(location):
+def display_status(location, year):
   if location=="BRASIL":
-    valor_por_estado_atacado = sum(coluna_total_atacado)
+    valor_por_estado_atacado = coluna_total_atacado[2021].loc['Column_Total']
   else:
     valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
   
   if location=="BRASIL":
-    valor_por_estado_varejo = sum(coluna_total_varejo)
+    valor_por_estado_varejo = coluna_total_varejo[2021].loc['Column_Total']
   else:
     valor_por_estado_varejo = []
 
   if location=="BRASIL":
-    valor_por_estado_alimentacao = sum(coluna_total_aliemntacao)
+    valor_por_estado_alimentacao = coluna_total_aliemntacao[2021].loc['Column_Total']
   else:
     valor_por_estado_varejo = []
   
   
   return (valor_por_estado_atacado,valor_por_estado_varejo,valor_por_estado_alimentacao)
 
-def plot_line_graph():
-  pass
+@app.callback(
+  Output("line-graph", "figure"), 
+  [
+    Input("aba-dropdown", "value"),
+    Input("location-button", "children"),
+  ]
+)
+
+
+def plot_line_graph(value, location):
+  if location == "BRASIL":
+    df_total_on_location = coluna_total_atacado
+  else:
+    pass
+
+  if value == "Varejo - Saldo_Varejo":
+    value_display = coluna_total_varejo.loc['Column_Total'].tolist()
+  
+  elif value == "Negócios de alimentação - Saldo":
+    value_display = coluna_total_aliemntacao.loc['Column_Total'].tolist()
+  
+  elif value == "Atacado - Saldo_Atacado":
+    value_display = coluna_total_atacado.loc['Column_Total'].tolist()
+  
+  fig2 = go.Figure(layout={"template":"plotly_dark"})
+  fig2.add_trace(go.Scatter(x=anos_lista, y=value_display))
+
+  return(fig2)
+  
 
 # ========================
 # Roda o aplicativo
