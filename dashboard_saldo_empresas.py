@@ -148,7 +148,6 @@ fig2.update_layout(
   margin        = dict(l=10, r=10, t=10, b=10)
 )
 
-
 # ========================
 # Layout
 
@@ -162,16 +161,7 @@ app.layout = dbc.Container(
         dbc.Button("BRASIL", color="primary", id="location-button", size="md")
         ], style={}),
       
-      html.Div([
-        html.P("Informe o ano:", style={"margin-top": "40px"}),
-        html.Div(id= 'div-dropdown-year', className='div-for-dropdown1', children=[
-          dcc.Dropdown(id='year-dropdown', 
-            options=[{"label":j, "value":i} for i,j in anos_dict.items()],
-            value=2021,
-            style={"margin-top": "10px"})
-        ])
-      ]),
-      
+
       dbc.Row([
         dbc.Col([
           dbc.Card([
@@ -286,6 +276,12 @@ def plot_line_graph(value, location):
   
   fig2 = go.Figure(layout={"template":"plotly_dark"})
   fig2.add_trace(go.Scatter(x=anos_lista, y=value_display))
+  fig2.update_layout(
+    paper_bgcolor = "#242424",
+    plot_bgcolor  = "#242424",
+    autosize      = True,
+    margin        = dict(l=10, r=10, t=10, b=10)
+    )
 
   return(fig2)
   
