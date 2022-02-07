@@ -231,36 +231,36 @@ fluid=True)
 # ========================
 # Interatividade
 
-# @app.callback(
-#   [
-#     Output("soma-atacado-text", "children"),
-#     Output("soma-varejo-text", "children"),
-#     Output("negocio-alimentacao-text", "children")
-#   ],
-#   [
-#     Input("location-button", "children"),
-#     Input("div-test", "children")
-#   ]
-# )
+@app.callback(
+  [
+    Output("soma-atacado-text", "children"),
+    Output("soma-varejo-text", "children"),
+    Output("negocio-alimentacao-text", "children")
+  ],
+  [
+    Input("location-button", "children"),
+    Input("dropdown-year", "value")
+  ]
+)
 
-# def display_status(location, year):
-#   if location=="BRASIL":
-#     valor_por_estado_atacado = coluna_total_atacado[2021].loc['Column_Total']
-#   else:
-#     valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
+def display_status(location, year):
+  if location=="BRASIL":
+    valor_por_estado_atacado = coluna_total_atacado[year].loc['Column_Total']
+  else:
+    valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
   
-#   if location=="BRASIL":
-#     valor_por_estado_varejo = coluna_total_varejo[2021].loc['Column_Total']
-#   else:
-#     valor_por_estado_varejo = []
+  if location=="BRASIL":
+    valor_por_estado_varejo = coluna_total_varejo[year].loc['Column_Total']
+  else:
+    valor_por_estado_varejo = []
 
-#   if location=="BRASIL":
-#     valor_por_estado_alimentacao = coluna_total_aliemntacao[2021].loc['Column_Total']
-#   else:
-#     valor_por_estado_varejo = []
+  if location=="BRASIL":
+    valor_por_estado_alimentacao = coluna_total_aliemntacao[year].loc['Column_Total']
+  else:
+    valor_por_estado_varejo = []
   
   
-#   return (valor_por_estado_atacado,valor_por_estado_varejo,valor_por_estado_alimentacao)
+  return (valor_por_estado_atacado,valor_por_estado_varejo,valor_por_estado_alimentacao)
 
 @app.callback(
   Output("line-graph", "figure"), 
@@ -297,47 +297,7 @@ def plot_line_graph(value, location):
 
   return(fig2)
   
-@app.callback(
-  [
-    Output(component_id="choropleth-map", component_property="figure")
-    # Output(component_id="soma-atacado-text", component_property="children"),
-    # Output(component_id="soma-varejo-text", component_property="children"),
-    # Output(component_id="negocio-alimentacao-text", component_property="children")
-  ],
-  [
-    Input(component_id="dropdown-year", component_property="value")
-    # ,Input(component_id="aba-dropdown", component_property="value")
-  ]
-)
 
-
-def update_dropdown_year(year_selected):
-  
-  # if aba_selected == "Varejo - Saldo_Varejo":
-  #   df_map = df_varejo[[year_selected, "estado"]]
-  # elif aba_selected == "Atacado - Saldo_Atacado":
-  #   df_map = df_atacado[[year_selected, "estado"]]
-  # elif aba_selected == "Negócios de alimentação - Saldo":
-  #   df_map = df_alimentacao[[year_selected, "estado"]]
-  # else:
-  #   pass
-  df_map = df_atacado[[year_selected, "estado"]].groupby(['estado']).sum().reset_index()
-  
-  fig = px.choropleth_mapbox(data_frame=df_map, locations="estado", color= year_selected,
-        center={"lat": -16.95, "lon": -47.78}, 
-        zoom=4,
-        geojson=brazil_states, color_continuous_scale="Redor", opacity=0.4)
-
-  fig.update_layout(
-    paper_bgcolor="#242424",
-    autosize=True,
-    margin=go.layout.Margin(l=0, r=0, t=0, b=0),
-    showlegend=False,
-    mapbox_style="carto-darkmatter"
-    )
-
-  
-  return fig
 
 
 # ========================
