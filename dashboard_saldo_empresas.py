@@ -92,7 +92,7 @@ def coluna_total(df):
 
 coluna_total_atacado      = coluna_total(df_atacado)
 coluna_total_varejo       = coluna_total(df_varejo)
-coluna_total_aliemntacao  = coluna_total(df_alimentacao)
+coluna_total_alimentacao  = coluna_total(df_alimentacao)
 
 # ===========================
 # Selação de anos
@@ -160,7 +160,7 @@ app.layout = dbc.Container(
         html.Img(id="logo", src=app.get_asset_url("catcry.png"), height=50),
         html.H5("Saldo das Empresas no Brasil 1960 - 2021"),
         dbc.Button("BRASIL", color="primary", id="location-button", size="md")
-        ], style={}),
+        ], style={"background-color": "#1E1E1E", "margin": "-25px", "padding": "25px"}),
       
       html.Div([
         dcc.Dropdown(
@@ -247,17 +247,19 @@ def display_status(location, year):
   if location=="BRASIL":
     valor_por_estado_atacado = coluna_total_atacado[year].loc['Column_Total']
   else:
-    valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
+    # valor_por_estado_atacado = df_atacado[df_atacado["estado"] == location]
+    valor_por_estado_atacado = df_atacado_by_estado[df_atacado_by_estado["estado"] == location][year].values[0]
+
   
   if location=="BRASIL":
     valor_por_estado_varejo = coluna_total_varejo[year].loc['Column_Total']
   else:
-    valor_por_estado_varejo = []
+    valor_por_estado_varejo = df_varejo_by_estado[df_atacado_by_estado["estado"] == location][year].values[0]
 
   if location=="BRASIL":
-    valor_por_estado_alimentacao = coluna_total_aliemntacao[year].loc['Column_Total']
+    valor_por_estado_alimentacao = coluna_total_alimentacao[year].loc['Column_Total']
   else:
-    valor_por_estado_varejo = []
+    valor_por_estado_alimentacao = df_alimentacao_by_estado[df_alimentacao_by_estado["estado"] == location][year].values[0]
   
   
   return (valor_por_estado_atacado,valor_por_estado_varejo,valor_por_estado_alimentacao)
@@ -281,7 +283,7 @@ def plot_line_graph(value, location):
     value_display = coluna_total_varejo.loc['Column_Total'].tolist()
   
   elif value == "Negócios de alimentação - Saldo":
-    value_display = coluna_total_aliemntacao.loc['Column_Total'].tolist()
+    value_display = coluna_total_alimentacao.loc['Column_Total'].tolist()
   
   elif value == "Atacado - Saldo_Atacado":
     value_display = coluna_total_atacado.loc['Column_Total'].tolist()
@@ -296,8 +298,19 @@ def plot_line_graph(value, location):
     )
 
   return(fig2)
-  
 
+@app.callback(
+    Output("location-button", "children"),
+    [Input("choropleth-map", "clickData"), Input("location-button", "n_clicks")]
+)
+def update_location(click_data, n_clicks):
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+    if click_data is not None and changed_id != "location-button.n_clicks":
+        state = click_data["points"][0]["location"]
+        return "{}".format(state)
+    
+    else:
+        return "BRASIL"
 
 
 # ========================
