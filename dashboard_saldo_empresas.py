@@ -78,11 +78,6 @@ df_estados_2021 = df_atacado[[2021, 'estado']].groupby(['estado']).sum().reset_i
 
 # ===========================
 # Recorte para o gráfico de linhas
-def soma_ano(df):
-  df_soma_ano                     = df.drop(['location', 'Total', 'municipio', 'estado'], 1)
-  df_soma_ano.loc['Column_Total'] = df.sum(numeric_only=True, axis=0)
-  soma                            = df_soma_ano.loc['Column_Total'].sum()
-  return soma 
 
 def coluna_total(df):
   """ Cria um linha com o valor total das colunas """
@@ -274,19 +269,30 @@ def display_status(location, year):
 
 
 def plot_line_graph(value, location):
-  if location == "BRASIL":
-    df_total_on_location = coluna_total_atacado
-  else:
-    pass
-
-  if value == "Varejo - Saldo_Varejo":
+  # if location == "BRASIL":
+  #   df_total_on_location = coluna_total_atacado
+  # else:
+  #   df_total_on_location = [i for i in df_atacado_by_estado.drop(columns="Total")[df_atacado_by_estado["estado"] == "SP"].values.tolist()[0] if type(i) != str]
+  
+    
+  if value == "Varejo - Saldo_Varejo" and location == "BRASIL":
     value_display = coluna_total_varejo.loc['Column_Total'].tolist()
   
-  elif value == "Negócios de alimentação - Saldo":
-    value_display = coluna_total_alimentacao.loc['Column_Total'].tolist()
+  elif value == "Varejo - Saldo_Varejo" and location != "BRASIL":
+    value_display = [i for i in df_varejo_by_estado.drop(columns="Total")[df_atacado_by_estado["estado"] == location].values.tolist()[0] if type(i) != str]
   
-  elif value == "Atacado - Saldo_Atacado":
+  elif value == "Negócios de alimentação - Saldo" and location == "BRASIL":
+    value_display = coluna_total_alimentacao.loc['Column_Total'].tolist()
+
+  elif value == "Negócios de alimentação - Saldo" and location != "BRASIL":
+    value_display = [i for i in df_alimentacao_by_estado.drop(columns="Total")[df_atacado_by_estado["estado"] == location].values.tolist()[0] if type(i) != str]
+
+  elif value == "Atacado - Saldo_Atacado" and location == "BRASIL":
     value_display = coluna_total_atacado.loc['Column_Total'].tolist()
+  
+  elif value == "Atacado - Saldo_Atacado" and location != "BRASIL":
+    value_display = [i for i in df_atacado_by_estado.drop(columns="Total")[df_atacado_by_estado["estado"] == location].values.tolist()[0] if type(i) != str]
+
   
   fig2 = go.Figure(layout={"template":"plotly_dark"})
   fig2.add_trace(go.Scatter(x=anos_lista, y=value_display))
